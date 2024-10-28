@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Vocacional</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .result-container {
+            display: none;
+            margin-top: 20px;
+        }
+        .result-box {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .result-header {
+            font-weight: bold;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        .btn-redo {
+            display: none;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center">Teste Vocacional</h2>
+        <form id="vocationalForm">
+            <!-- Container de perguntas -->
+            <div id="questionsContainer"></div>
+            <button type="button" class="btn btn-primary mt-4" onclick="calculateResult()">Ver Resultado</button>
+        </form>
+        
+        <!-- Tabela de contagem de respostas -->
+        <div class="table-responsive mt-4" id="summaryTable" style="display: none;">
+            <h4>Quantidade de Respostas por Letra</h4>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Letra</th>
+                        <th>Quantidade de Respostas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>A</td>
+                        <td id="countA">0</td>
+                    </tr>
+                    <tr>
+                        <td>B</td>
+                        <td id="countB">0</td>
+                    </tr>
+                    <tr>
+                        <td>C</td>
+                        <td id="countC">0</td>
+                    </tr>
+                    <tr>
+                        <td>D</td>
+                        <td id="countD">0</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Resultados -->
+        <div class="result-container" id="resultContainer">
+            <div class="result-box alert alert-primary">
+                <div class="result-header">Maior Pontuação</div>
+                <p id="resultChoice"></p>
+            </div>
+            <div class="result-box alert alert-secondary">
+                <div class="result-header">Explicação</div>
+                <p id="resultExplanation"></p>
+            </div>
+            <div class="result-box alert alert-success">
+                <div class="result-header">Profissões Sugeridas</div>
+                <p id="resultCareers"></p>
+            </div>
+            <button class="btn btn-warning btn-redo" onclick="redoTest()">Refazer o Teste</button>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        const questions = [
+            "Na escola, você prefere assuntos ligados a:",
+            "Você prefere levar sua vida:",
+            "Você se descreveria como uma pessoa:",
+            "Você se considera uma pessoa:",
+            "De quais características suas você sente orgulho:",
+            "Costuma confiar mais em:",
+            "Quase sempre, você gosta de:",
+            "A vida é mais interessante quando você tem:",
+            "Você gostaria de ser:",
+            "Você é muito bom lidando com:",
+            "Antes de agir, você analisa:",
+            "Gosta quando as pessoas:",
+            "Você costuma abraçar um novo projeto:",
+            "Geralmente, você prefere agir:",
+            "Você fica motivado quando:",
+            "Em atividades em grupo, você prefere:",
+            "Liderar é uma atividade que gosta de exercer:",
+            "Em uma escola, você gostaria de ser:",
+            "É um elogio quando se referem a você como:",
+            "Frase que têm a ver com você:"
+        ];
+
+        const options = [
+            ["a) Arte, esportes e atividades extracurriculares", "b) Biologia e genética", "c) Ciências humanas, idiomas", "d) Ciências exatas"],
+            ["a) Com pouca rotina e poucas regras", "b) Com regras definidas e disciplina", "c) Interagindo com todo tipo de pessoa", "d) Com muita autonomia: “na sua”"],
+            ["a) Impulsiva e um tanto aventureira", "b) Cautelosa e responsável", "c) Entusiasmada e muito amiga", "d) Calma e diferente da maioria"],
+            ["a) Prática e hábil para improvisar", "b) Batalhadora, que sabe o que quer", "c) Preocupada com questões humanas", "d) Capacitada para criar e inventar"],
+            ["a) Audácia e facilidade para lidar com o inesperado", "b) Senso de dever e capacidade de dar exemplo", "c) Idealismo e disposição para compreender os outros", "d) Engenhosidade e rapidez mental"],
+            ["a) Percepção imediata", "b) Costumes e tradições", "c) Intuição", "d) Razão e lógica"],
+            ["a) Causar impacto: os “holofotes” o atraem", "b) Ser visto como membro valioso de um grupo", "c) Sonhar em transformar o mundo", "d) Desvendar um enigma ou inventar algo útil"],
+            ["a) Desafios, situações cambiantes", "b) Segurança, emprego garantido, integração social", "c) Possibilidade de fazer algo para mudar o mundo", "d) Possibilidade de ir além do que já é conhecido"],
+            ["a) Um craque na profissão que escolher", "b) Um executivo bem-sucedido", "c) Um profissional de prestígio", "d) Um especialista ou um cientista"],
+            ["a) Ferramentas, instrumentos e equipamentos", "b) Controle do tempo, comando e execução", "c) Pessoas de todos os níveis sociais e culturais", "d) Sistemas e construção (material ou mental)"],
+            ["a) As vantagens imediatas", "b) As experiências já vividas", "c) As possibilidades futuras", "d) As condições e consequências"],
+            ["a) O surpreendem com um presente", "b) Expressam gratidão por algo que fez", "c) Reconhecem sua personalidade singular", "d) Reconhecem sua inteligência"],
+            ["a) Com a cara e a coragem", "b) Guiado pela experiência", "c) Confiando na intuição e na criatividade", "d) Depois de verificar todas as variáveis"],
+            ["a) No calor do momento", "b) Com segurança e conforme o costume", "c) Quando está inspirado", "d) Quando um problema o desafia"],
+            ["a) Tem a oportunidade de superar obstáculos", "b) Experimenta estabilidade na vida profissional", "c) Harmonia e inspiração guiam a atividade", "d) Há liberdade para projetar o futuro"],
+            ["a) As desafiadoras, que exigem ação rápida", "b) Administrar os recursos disponíveis", "c) Motivar as pessoas para darem o melhor de si", "d) Descartar logo o que não funciona"],
+            ["a) Por pouco tempo e dependendo da situação", "b) Quando pode comandar do começo ao fim", "c) Quando é preciso identificar e reunir talentos", "d) Quando o raciocínio estratégico é necessário"],
+            ["a) Professor de educação física", "b) Diretor", "c) Professor de literatura", "d) Professor de matemática ou física"],
+            ["a) Corajoso, otimista e divertido", "b) Cauteloso, responsável e aplicado", "c) Harmonizador, íntegro e sábio", "d) Uma mente brilhante"],
+            ["a) “Deixo a vida me levar...”", "b) “Manda quem pode; obedece quem tem juízo”", "c) “Para seu próprio interesse, seja verdadeiro”", "d) “Penso, logo existo”"]
+        ];
+
+        const resultDetails = {
+            a: {
+                choice: "Maior pontuação em: A",
+                explanation: "A principal característica dos relacionados com a opção a), é o movimento; gostam de novidade. Apresentam destreza física e boa expressão corporal. Se forem mais propensos ao raciocínio lógico, terão mais êxito em profissões que requeiram precisão e acuidade. Se forem mais inclinados ao sentimento e à emoção, as profissões relacionadas ao trato com pessoas são as mais indicadas. Pessoas assim, não gostam de rotina e veem o trabalho como uma grande fonte de prazer.",
+                careers: "Esportista, Anestesista, Artista, Plástico, Ator, Chef, de, Cozinha, Cineasta, Cirurgião, Coreógrafo, Dançarino, Dermatologista, Estilista, Fotógrafo, Guia, de, Turismo, Instrumentador, Cirúrgico, Instrutor, de, Vôo, Jornalista, Médico, Clínico, Músico, Paisagista, Personal, Trainner, Personal, Stylistic, Piloto, Publicitário, Relações, Públicas, Roteirista."
+            },
+            b: {
+                choice: "Maior pontuação em: B",
+                explanation: "Comando e responsabilidade são duas palavras que definem as pessoas desta opção. Elas gostam de lidar com fatos, quantidades, análises, organização e planejamento. Trabalham duro e preferem profissões que lhes proporcionem status e possibilidade de crescimento. São as mais presentes no mundo corporativo.",
+                careers: "Administrador de Empresas, Advogado, Assistente, Social, Bibliotecário, Delegado, Engenheiro, Mecânico/Químico, Juiz de Direito, Pastor, Padre, Rabino, Policial, Promotor, Público."
+            },
+            c: {
+                choice: "Maior pontuação em: C",
+                explanation: "Facilmente reconhecíveis por seu entusiasmo e interesse nas relações humanas, as pessoas desta opção têm na intuição o seu ponto forte. Muitas endereçam seu esforço e talento para o desenvolvimento intelectual de alunos e discípulos e o conforto psicológicos de pacientes e colegas de trabalho. No grupo desta opção, estão as personalidades mais contempladas com o Nobel da Paz e de literatura.",
+                careers: "Artista, plástico, Dramaturgo, Educador, Escritor, Filósofo, Jornalista, Pedagogo, Professor, Psicólogo, Psiquiatra, Sociólogo, Terapeuta, ocupacional, Tradutor."
+            },
+            d: {
+                choice: "Maior pontuação em: D",
+                explanation: "São intuitivos como os da opção anterior, mas, em vez de se preocupar com pessoas, costumam focar seus interesses em grandes áreas do conhecimento, como ciência e tecnologia. Apresentam notável capacidade para identificar problemas concretos e resolvê-los, bem como para o raciocínio abstrato.",
+                careers: "Analista de Sistemas, Antropólogo, Arquiteto, Astrônomo, Criador de Software, Designer, Industrial, Economista, Engenheiro, Físico, Líder de uma Corporação, Matemático, Militar, Músico (Regente), Oceanógrafo, Pesquisador, Químico, Urbanista, Zoólogo."
+            }
+        };
+
+        function generateQuestions() {
+            const container = document.getElementById("questionsContainer");
+            questions.forEach((question, index) => {
+                const questionHTML = `
+                    <div class="form-group">
+                        <label>${question}</label>
+                        ${options[index].map((option, i) => `
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="question${index}" value="${option[0]}" required>
+                                <label class="form-check-label">${option}</label>
+                            </div>
+                        `).join('')}
+                    </div>`;
+                container.innerHTML += questionHTML;
+            });
+        }
+
+        function calculateResult() {
+            const answers = { a: 0, b: 0, c: 0, d: 0 };
+            const form = document.getElementById("vocationalForm");
+
+            form.querySelectorAll("input[type=radio]:checked").forEach((input) => {
+                const value = input.value[0];
+                answers[value]++;
+            });
+
+            document.getElementById("countA").textContent = answers.a;
+            document.getElementById("countB").textContent = answers.b;
+            document.getElementById("countC").textContent = answers.c;
+            document.getElementById("countD").textContent = answers.d;
+
+            const maxChoice = Object.keys(answers).reduce((a, b) => answers[a] > answers[b] ? a : b);
+            document.getElementById("resultChoice").textContent = resultDetails[maxChoice].choice;
+            document.getElementById("resultExplanation").textContent = resultDetails[maxChoice].explanation;
+            document.getElementById("resultCareers").textContent = resultDetails[maxChoice].careers;
+
+            document.getElementById("summaryTable").style.display = "block";
+            document.getElementById("resultContainer").style.display = "block";
+            document.querySelector(".btn-redo").style.display = "inline-block";
+        }
+
+        function redoTest() {
+            document.getElementById("vocationalForm").reset();
+            document.getElementById("summaryTable").style.display = "none";
+            document.getElementById("resultContainer").style.display = "none";
+            document.querySelector(".btn-redo").style.display = "none";
+        }
+
+        generateQuestions();
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
